@@ -1,0 +1,125 @@
+#include "types.h"
+#include "stat.h"
+#include "fcntl.h"
+#include "user.h"
+#include "x86.h"
+#include "lock.h"//added
+
+char *
+strcpy(char *s, char *t)
+{
+	char *os;
+
+	os = s;
+	while ((*s++ = *t++) != 0)
+		;
+	return os;
+}
+
+int
+strcmp(const char *p, const char *q)
+{
+	while (*p && *p == *q) p++, q++;
+	return (uchar)*p - (uchar)*q;
+}
+
+uint
+strlen(char *s)
+{
+	int n;
+
+	for (n = 0; s[n]; n++)
+		;
+	return n;
+}
+
+void *
+memset(void *dst, int c, uint n)
+{
+	stosb(dst, c, n);
+	return dst;
+}
+
+char *
+strchr(const char *s, char c)
+{
+	for (; *s; s++)
+		if (*s == c) return (char *)s;
+	return 0;
+}
+
+char *
+gets(char *buf, int max)
+{
+	int  i, cc;
+	char c;
+
+	for (i = 0; i + 1 < max;) {
+		cc = read(0, &c, 1);
+		if (cc < 1) break;
+		buf[i++] = c;
+		if (c == '\n' || c == '\r') break;
+	}
+	buf[i] = '\0';
+	return buf;
+}
+
+int
+stat(char *n, struct stat *st)
+{
+	int fd;
+	int r;
+
+	fd = open(n, O_RDONLY);
+	if (fd < 0) return -1;
+	r = fstat(fd, st);
+	close(fd);
+	return r;
+}
+
+int
+atoi(const char *s)
+{
+	int n;
+
+	n = 0;
+	while ('0' <= *s && *s <= '9') n= n * 10 + *s++ - '0';
+	return n;
+}
+
+void *
+memmove(void *vdst, void *vsrc, int n)
+{
+	char *dst, *src;
+
+	dst = vdst;
+	src = vsrc;
+	while (n-- > 0) *dst++= *src++;
+	return vdst;
+}
+
+//lvl0
+//cuz systemcall can only pass int and ptr so we set the type to int.
+int  lock_create(lock_type_t type){
+	if(type == LOCK_SPIN){
+		return lk_create(1);
+	}
+	if(type == LOCK_BLOCK){
+		return lk_create(2);
+	}
+	if(type == LOCK_ADAPTIVE){
+		return lk_create(3);
+	}
+	return -1;}
+
+int  lock_take(int lockid){
+	return lk_take(lockid);
+}
+
+int  lock_release(int lockid){
+	return lk_release(lockid);
+}
+
+void lock_delete(int lockid){
+	lk_delete(lockid);
+}
